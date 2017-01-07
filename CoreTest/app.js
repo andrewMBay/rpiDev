@@ -7,6 +7,14 @@ var exec = require('child_process').exec;
 var http = require('http').Server(server)
 var io = require('socket.io')(http);
 var gpio = require('pi-gpio');
+
+
+ // Holding area for init on GPIO pin 8(BCM-14)
+gpio.open(8, "output", function(err) {
+  if(err)console.log("Error with pin init - already exported??");  
+});
+
+
 /*
  * 	--( SERVER CREATION )--
  */
@@ -37,19 +45,19 @@ server.get('/', function (req, res) {
   res.sendFile(__dirname + 'index.html');
 });
 
-  // Serve the React Application on a GET request for React
+  // Serve the Toggle Application on a GET request for React
 server.get('/Toggle', function (req, res) {
   console.log("Replying to \"toggle\" request...");
   res.sendFile(__dirname + "Toggle/client/" + 'index.html');
 });
 
-  // Serve the React Application on a GET request for React
+  // Serve the List Application on a GET request for React
 server.get('/List', function (req, res) {
   console.log("Replying to \"list\" request...");
   res.sendFile(__dirname + "List/client/" + 'index.html');
 });
 
-  // Handle a POST request for the React Application
+  // Handle a POST request for the Toggle Application
 server.post('/Toggle', function (req, res) {
   console.log("Parsing \"toggle\" POST...");
   console.log(req.body);
@@ -71,26 +79,23 @@ server.post('/Toggle', function (req, res) {
   // Backup routing for static serving of public resources (jpg, css, js, etc)
 server.use(express.static( __dirname ));
 
-  // Backup routing for static serving of react resources
+  // Backup routing for static serving of react Toggle resources
 server.use(express.static( __dirname + "Toggle/" ));
 
-  // Backup routing for static serving of react resources
+  // Backup routing for static serving of react List resources
 server.use(express.static( __dirname + "List/" ));
 
 
 /*
  * 	--( DISPATCH RECEIVERS )--
  */
-gpio.open(8, "output", function(err) {		// Open pin 16 for output 
-  if(err)console.log("Error with pin init - already exported??");  
-});
 
 
 var handleToggle = function(req, res){
   console.log("Toggle handler received: " + req.body.status);
   
-	// NOTE! To disable code blocks, delete the first slash in the upper left corner!
 	// NOTE! To enable code blocks, ensure there are two slashes in the upper left corner!
+	// NOTE! To disable code blocks, delete the first slash in the upper left corner!
   /*
   //* 	TOGGLE BLOCK --> USE pi-gpio MODULE
   //* 
@@ -120,6 +125,8 @@ var handleToggle = function(req, res){
   res.status(200).send({success:true});
 }
 
+  // Decodes and console logs the incoming data from the Toggle page
+  // Fully capable of handling input without escaping, etc.
 var handleUserData = function(req, res){
   var name = req.body.name;
   var number = parseInt(req.body.number);
@@ -137,29 +144,34 @@ var handleUserData = function(req, res){
  * 	--( SOCKET HANDLERS )--
  */
 
-//Whenever someone connects this gets executed
+  //Whenever someone connects this gets executed
 io.on('connection', function(socket){
   console.log('A user connected');
 
-  //Whenever someone disconnects this piece of code executed
+    //Whenever someone disconnects this piece of code executed
   socket.on('disconnect', function () {
     console.log('A user disconnected');
   });
   
-    //Whenever someone disconnects this piece of code executed
+    //Whenever someone toggles a socket-callback-enabled button, this piece of code executed
   socket.on('toggle', function (data) {
     console.log('A user toggled the button!');
     console.log(data);
   });
   
+    // Allows a socket query on the pin state
   socket.on('pinQuery', function(){
     socket.emit('pinStatus', {status:gpio.read(8)});
   });
 
 });
+
+
 /*
  * 	--( ASSOCIATED FUNCTIONS )--
  */
+
+  // Uses a bash script to toggle the green board LED on a rPi3B
 var ledControl = function(onOff){
   console.log("Attempting to turn LED -> " + onOff);
   exec('sudo bash '+ __dirname +'../ledControl.sh ' + onOff, function (error, stdout, stderr) { 
