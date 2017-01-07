@@ -2,7 +2,7 @@
 rpicamdir="html"
 webserver="apache"
 webport="100"
-user=""
-webpasswd=""
+user="admin"
+webpasswd="mbay"
 autostart="yes"
 

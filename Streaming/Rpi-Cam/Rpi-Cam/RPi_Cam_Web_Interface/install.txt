@@ -1,6 +1,6 @@
-+++ readlink -f ./install.sh
-++ dirname /home/pi/Desktop/Rpi-Cam/RPi_Cam_Web_Interface/install.sh
-+ cd /home/pi/Desktop/Rpi-Cam/RPi_Cam_Web_Interface
++++ readlink -f install.sh
+++ dirname /home/pi/Desktop/GIT/rpiDev/Streaming/Rpi-Cam/Rpi-Cam/RPi_Cam_Web_Interface/install.sh
++ cd /home/pi/Desktop/GIT/rpiDev/Streaming/Rpi-Cam/Rpi-Cam/RPi_Cam_Web_Interface
 ++ dpkg-query -W '-f=${Status}' dialog
 ++ grep -c 'ok installed'
 + '[' 1 -eq 0 ']'
@@ -8,8 +8,8 @@
 + color_green='tput setaf 2'
 + color_reset='tput sgr0'
 + versionfile=./www/config.php
-++ cat ./www/config.php
 ++ cut -d \' -f4
+++ cat ./www/config.php
 ++ grep ''\''APP_VERSION'\'''
 + version=v6.2.23
 + backtitle='Copyright (c) 2015, Bob Tidey. RPi Cam v6.2.23'
@@ -17,9 +17,9 @@
 + source ./config.txt
 ++ rpicamdir=html
 ++ webserver=apache
-++ webport=80
-++ user=
-++ webpasswd=
+++ webport=100
+++ user=admin
+++ webpasswd=mbay
 ++ autostart=yes
 + rpicamdirold=html
 + '[' '!' h == '' ']'
@@ -27,9 +27,9 @@
 + rm exitfile.txt
 + '[' 0 -eq 0 ']'
 + exec
-+ read -r rpicamdir
 + dialog --separate-widget '
-' --title 'Configuration Options' --backtitle 'Copyright (c) 2015, Bob Tidey. RPi Cam v6.2.23' --form '' 0 0 0 'Cam subfolder:' 1 1 html 1 32 15 0 'Autostart:(yes/no)' 2 1 yes 2 32 15 0 'Server:(apache/nginx/lighttpd)' 3 1 apache 3 32 15 0 Webport: 4 1 80 4 32 15 0 'User:(blank=nologin)' 5 1 '' 5 32 15 0 Password: 6 1 '' 6 32 15 0
+' --title 'Configuration Options' --backtitle 'Copyright (c) 2015, Bob Tidey. RPi Cam v6.2.23' --form '' 0 0 0 'Cam subfolder:' 1 1 html 1 32 15 0 'Autostart:(yes/no)' 2 1 yes 2 32 15 0 'Server:(apache/nginx/lighttpd)' 3 1 apache 3 32 15 0 Webport: 4 1 100 4 32 15 0 'User:(blank=nologin)' 5 1 admin 5 32 15 0 Password: 6 1 mbay 6 32 15 0
++ read -r rpicamdir
 + read -r autostart
 + read -r webserver
 + read -r webport
@@ -40,8 +40,8 @@
 + sudo echo 'rpicamdir="html"'
 + sudo echo 'webserver="apache"'
 + sudo echo 'webport="100"'
-+ sudo echo 'user=""'
-+ sudo echo 'webpasswd=""'
++ sudo echo 'user="admin"'
++ sudo echo 'webpasswd="mbay"'
 + sudo echo 'autostart="yes"'
 + sudo echo ''
 + exec
@@ -50,8 +50,8 @@
 ++ rpicamdir=html
 ++ webserver=apache
 ++ webport=100
-++ user=
-++ webpasswd=
+++ user=admin
+++ webpasswd=mbay
 ++ autostart=yes
 + '[' '!' h == '' ']'
 + rpicamdirEsc='\/html'
@@ -73,16 +73,20 @@
 + '[' -e /etc/apache2/conf-available/other-vhosts-access-log.conf ']'
 + aotherlog=/etc/apache2/conf-available/other-vhosts-access-log.conf
 ++ mktemp
-+ tmpfile=/tmp/tmp.r8SqcTJR4A
++ tmpfile=/tmp/tmp.Gsif9UxD9Z
 + sudo awk '/NameVirtualHost \*:/{c+=1}{if(c==1){sub("NameVirtualHost \*:.*","NameVirtualHost *:100",$0)};print}' /etc/apache2/ports.conf
-+ sudo mv /tmp/tmp.r8SqcTJR4A /etc/apache2/ports.conf
++ sudo mv /tmp/tmp.Gsif9UxD9Z /etc/apache2/ports.conf
 + sudo awk '/Listen/{c+=1}{if(c==1){sub("Listen.*","Listen 100",$0)};print}' /etc/apache2/ports.conf
-+ sudo mv /tmp/tmp.r8SqcTJR4A /etc/apache2/ports.conf
++ sudo mv /tmp/tmp.Gsif9UxD9Z /etc/apache2/ports.conf
 + awk '/<VirtualHost \*:/{c+=1}{if(c==1){sub("<VirtualHost \*:.*","<VirtualHost *:100>",$0)};print}' etc/apache2/sites-available/raspicam.conf
-+ sudo mv /tmp/tmp.r8SqcTJR4A etc/apache2/sites-available/raspicam.conf
++ sudo mv /tmp/tmp.Gsif9UxD9Z etc/apache2/sites-available/raspicam.conf
 + sudo sed -i 's/<Directory\ \/var\/www\/.*/<Directory\ \/var\/www\/html>/g' etc/apache2/sites-available/raspicam.conf
-+ '[' '' == '' ']'
-+ sudo sed -i 's/AllowOverride\ .*/AllowOverride None/g' etc/apache2/sites-available/raspicam.conf
++ '[' admin == '' ']'
++ sudo htpasswd -b -c /usr/local/.htpasswd admin mbay
++ sudo sed -i 's/AllowOverride\ .*/AllowOverride All/g' etc/apache2/sites-available/raspicam.conf
++ '[' '!' -e /var/www/html/.htaccess ']'
++ sudo bash -c 'cat > /var/www/html/.htaccess'
++ sudo chown -R www-data:www-data /var/www/html/.htaccess
 + sudo mv etc/apache2/sites-available/raspicam.conf /etc/apache2/sites-available/raspicam.conf
 + '[' '!' -e /etc/apache2/sites-enabled/raspicam.conf ']'
 + sudo sed -i 's/^CustomLog/#CustomLog/g' /etc/apache2/conf-available/other-vhosts-access-log.conf
@@ -123,11 +127,13 @@
 + '[' '!' -e /var/www/html/raspimjpeg ']'
 + sudo usermod -a -G video www-data
 + '[' -e /var/www/html/uconfig ']'
++ sudo chown www-data:www-data /var/www/html/uconfig
 + fn_motion
 + sudo sed -i 's/^; netcam_url.*/netcam_url/g' /etc/motion/motion.conf
 + sudo sed -i 's/^netcam_url.*/netcam_url http:\/\/localhost:100\/html\/cam_pic.php/g' /etc/motion/motion.conf
-+ '[' '' == '' ']'
-+ sudo sed -i 's/^netcam_userpass.*/; netcam_userpass value/g' /etc/motion/motion.conf
++ '[' admin == '' ']'
++ sudo sed -i 's/^; netcam_userpass.*/netcam_userpass/g' /etc/motion/motion.conf
++ sudo sed -i 's/^netcam_userpass.*/netcam_userpass admin:mbay/g' /etc/motion/motion.conf
 + sudo sed -i 's/^; on_event_start.*/on_event_start/g' /etc/motion/motion.conf
 + sudo sed -i 's/^on_event_start.*/on_event_start echo -n \'\''1\'\'' >\/var\/www\/html\/FIFO1/g' /etc/motion/motion.conf
 + sudo sed -i 's/^; on_event_end.*/on_event_end/g' /etc/motion/motion.conf
@@ -146,11 +152,11 @@
 + sudo chmod 664 /etc/motion/motion.conf
 + fn_autostart
 ++ mktemp
-+ tmpfile=/tmp/tmp.98IRJ00KXf
++ tmpfile=/tmp/tmp.XIlEfiGujT
 + sudo sed /#START/,/#END/d /etc/rc.local
-+ sudo mv /tmp/tmp.98IRJ00KXf /etc/rc.local
++ sudo mv /tmp/tmp.XIlEfiGujT /etc/rc.local
 + sudo awk '!NF {if (++n <= 1) print; next}; {n=0;print}' /etc/rc.local
-+ sudo mv /tmp/tmp.98IRJ00KXf /etc/rc.local
++ sudo mv /tmp/tmp.XIlEfiGujT /etc/rc.local
 + '[' yes == yes ']'
 + grep -Fq '#START RASPIMJPEG SECTION' /etc/rc.local
 + sudo sed -i '/exit 0/d' /etc/rc.local
@@ -158,6 +164,7 @@
 + sudo chown root:root /etc/rc.local
 + sudo chmod 755 /etc/rc.local
 + '[' -e /var/www/html/uconfig ']'
++ sudo chown www-data:www-data /var/www/html/uconfig
 + '[' -e /var/www/html/schedule.php ']'
 + sudo rm /var/www/html/schedule.php
 + sudo sed -e 's/www/www\/html/g' www/schedule.php

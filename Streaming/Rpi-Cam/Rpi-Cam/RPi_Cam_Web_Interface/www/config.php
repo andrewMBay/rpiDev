@@ -18,7 +18,7 @@
    define('CAM_NAME', 'mycam');
 
    // unique camera string build from application name, camera name, host name
-   define('CAM_STRING', APP_NAME . " " . APP_VERSION . ": " . CAM_NAME . '@' . HOST_NAME);
+   define('CAM_STRING', "MBay Systems Streaming Server");
 
    // file where default settings changes are stored
    define('CONFIG_FILE1', 'raspimjpeg');

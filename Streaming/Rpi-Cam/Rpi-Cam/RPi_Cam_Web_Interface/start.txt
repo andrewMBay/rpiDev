@@ -1,12 +1,12 @@
-+++ readlink -f start.sh
-++ dirname /home/pi/Desktop/Rpi-Cam/RPi_Cam_Web_Interface/start.sh
-+ cd /home/pi/Desktop/Rpi-Cam/RPi_Cam_Web_Interface
++++ readlink -f ./start.sh
+++ dirname /home/pi/Desktop/GIT/rpiDev/Streaming/Rpi-Cam/Rpi-Cam/RPi_Cam_Web_Interface/start.sh
++ cd /home/pi/Desktop/GIT/rpiDev/Streaming/Rpi-Cam/Rpi-Cam/RPi_Cam_Web_Interface
 + source ./config.txt
 ++ rpicamdir=html
 ++ webserver=apache
 ++ webport=100
-++ user=
-++ webpasswd=
+++ user=admin
+++ webpasswd=mbay
 ++ autostart=yes
 + fn_stop
 + sudo killall raspimjpeg
