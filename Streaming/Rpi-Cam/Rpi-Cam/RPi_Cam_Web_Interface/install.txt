@@ -3,13 +3,14 @@
 + cd /home/pi/Desktop/GIT/rpiDev/Streaming/Rpi-Cam/Rpi-Cam/RPi_Cam_Web_Interface
 ++ dpkg-query -W '-f=${Status}' dialog
 ++ grep -c 'ok installed'
-+ '[' 1 -eq 0 ']'
++ '[' 0 -eq 0 ']'
++ sudo apt-get install -y dialog
 + color_red='tput setaf 1'
 + color_green='tput setaf 2'
 + color_reset='tput sgr0'
 + versionfile=./www/config.php
-++ cut -d \' -f4
 ++ cat ./www/config.php
+++ cut -d \' -f4
 ++ grep ''\''APP_VERSION'\'''
 + version=v6.2.23
 + backtitle='Copyright (c) 2015, Bob Tidey. RPi Cam v6.2.23'
@@ -27,9 +28,9 @@
 + rm exitfile.txt
 + '[' 0 -eq 0 ']'
 + exec
++ read -r rpicamdir
 + dialog --separate-widget '
 ' --title 'Configuration Options' --backtitle 'Copyright (c) 2015, Bob Tidey. RPi Cam v6.2.23' --form '' 0 0 0 'Cam subfolder:' 1 1 html 1 32 15 0 'Autostart:(yes/no)' 2 1 yes 2 32 15 0 'Server:(apache/nginx/lighttpd)' 3 1 apache 3 32 15 0 Webport: 4 1 100 4 32 15 0 'User:(blank=nologin)' 5 1 admin 5 32 15 0 Password: 6 1 mbay 6 32 15 0
-+ read -r rpicamdir
 + read -r autostart
 + read -r webserver
 + read -r webport
@@ -73,13 +74,13 @@
 + '[' -e /etc/apache2/conf-available/other-vhosts-access-log.conf ']'
 + aotherlog=/etc/apache2/conf-available/other-vhosts-access-log.conf
 ++ mktemp
-+ tmpfile=/tmp/tmp.Gsif9UxD9Z
++ tmpfile=/tmp/tmp.e3R0Ey1gDN
 + sudo awk '/NameVirtualHost \*:/{c+=1}{if(c==1){sub("NameVirtualHost \*:.*","NameVirtualHost *:100",$0)};print}' /etc/apache2/ports.conf
-+ sudo mv /tmp/tmp.Gsif9UxD9Z /etc/apache2/ports.conf
++ sudo mv /tmp/tmp.e3R0Ey1gDN /etc/apache2/ports.conf
 + sudo awk '/Listen/{c+=1}{if(c==1){sub("Listen.*","Listen 100",$0)};print}' /etc/apache2/ports.conf
-+ sudo mv /tmp/tmp.Gsif9UxD9Z /etc/apache2/ports.conf
++ sudo mv /tmp/tmp.e3R0Ey1gDN /etc/apache2/ports.conf
 + awk '/<VirtualHost \*:/{c+=1}{if(c==1){sub("<VirtualHost \*:.*","<VirtualHost *:100>",$0)};print}' etc/apache2/sites-available/raspicam.conf
-+ sudo mv /tmp/tmp.Gsif9UxD9Z etc/apache2/sites-available/raspicam.conf
++ sudo mv /tmp/tmp.e3R0Ey1gDN etc/apache2/sites-available/raspicam.conf
 + sudo sed -i 's/<Directory\ \/var\/www\/.*/<Directory\ \/var\/www\/html>/g' etc/apache2/sites-available/raspicam.conf
 + '[' admin == '' ']'
 + sudo htpasswd -b -c /usr/local/.htpasswd admin mbay
@@ -89,22 +90,29 @@
 + sudo chown -R www-data:www-data /var/www/html/.htaccess
 + sudo mv etc/apache2/sites-available/raspicam.conf /etc/apache2/sites-available/raspicam.conf
 + '[' '!' -e /etc/apache2/sites-enabled/raspicam.conf ']'
++ sudo ln -sf /etc/apache2/sites-available/raspicam.conf /etc/apache2/sites-enabled/raspicam.conf
 + sudo sed -i 's/^CustomLog/#CustomLog/g' /etc/apache2/conf-available/other-vhosts-access-log.conf
 + sudo a2dissite 000-default.conf
 + sudo service apache2 restart
 + sudo sed -i 's/^www-data:x.*/www-data:x:33:33:www-data:\/var\/www:\/bin\/bash/g' /etc/passwd
 + '[' '!' -e /var/www/html/FIFO ']'
++ sudo mknod /var/www/html/FIFO p
 + sudo chmod 666 /var/www/html/FIFO
 + '[' '!' -e /var/www/html/FIFO11 ']'
++ sudo mknod /var/www/html/FIFO11 p
 + sudo chmod 666 /var/www/html/FIFO11
 + '[' '!' -e /var/www/html/FIFO1 ']'
++ sudo mknod /var/www/html/FIFO1 p
 + sudo chmod 666 /var/www/html/FIFO1
 + sudo chmod 755 /var/www/html/raspizip.sh
 + '[' '!' -d /dev/shm/mjpeg ']'
++ mkdir /dev/shm/mjpeg
 + '[' '!' -e /var/www/html/cam.jpg ']'
++ sudo ln -sf /dev/shm/mjpeg/cam.jpg /var/www/html/cam.jpg
 + '[' -e /var/www/html/status_mjpeg.txt ']'
 + sudo rm /var/www/html/status_mjpeg.txt
 + '[' '!' -e /dev/shm/mjpeg/status_mjpeg.txt ']'
++ echo -n halted
 + sudo chown www-data:www-data /dev/shm/mjpeg/status_mjpeg.txt
 + sudo ln -sf /dev/shm/mjpeg/status_mjpeg.txt /var/www/html/status_mjpeg.txt
 + sudo chown -R www-data:www-data /var/www/html
@@ -113,21 +121,18 @@
 + sudo cp -r bin/raspimjpeg /opt/vc/bin/
 + sudo chmod 755 /opt/vc/bin/raspimjpeg
 + '[' '!' -e /usr/bin/raspimjpeg ']'
++ sudo ln -s /opt/vc/bin/raspimjpeg /usr/bin/raspimjpeg
 + sed -e 's/www/www\/html/' etc/raspimjpeg/raspimjpeg.1
 ++ cat /proc/cmdline
 ++ awk -v 'RS= ' -F= '/boardrev/ { print $2 }'
 + '[' 0xa02082 == 0x11 ']'
 + '[' -e /etc/raspimjpeg ']'
-+ tput setaf 2
-+ echo 'Your custom raspimjpg backed up at /etc/raspimjpeg.bak'
-+ tput sgr0
-+ sudo cp -r /etc/raspimjpeg /etc/raspimjpeg.bak
 + sudo cp -r etc/raspimjpeg/raspimjpeg /etc/
 + sudo chmod 644 /etc/raspimjpeg
 + '[' '!' -e /var/www/html/raspimjpeg ']'
++ sudo ln -s /etc/raspimjpeg /var/www/html/raspimjpeg
 + sudo usermod -a -G video www-data
 + '[' -e /var/www/html/uconfig ']'
-+ sudo chown www-data:www-data /var/www/html/uconfig
 + fn_motion
 + sudo sed -i 's/^; netcam_url.*/netcam_url/g' /etc/motion/motion.conf
 + sudo sed -i 's/^netcam_url.*/netcam_url http:\/\/localhost:100\/html\/cam_pic.php/g' /etc/motion/motion.conf
@@ -152,11 +157,11 @@
 + sudo chmod 664 /etc/motion/motion.conf
 + fn_autostart
 ++ mktemp
-+ tmpfile=/tmp/tmp.XIlEfiGujT
++ tmpfile=/tmp/tmp.dpzHy7BSys
 + sudo sed /#START/,/#END/d /etc/rc.local
-+ sudo mv /tmp/tmp.XIlEfiGujT /etc/rc.local
++ sudo mv /tmp/tmp.dpzHy7BSys /etc/rc.local
 + sudo awk '!NF {if (++n <= 1) print; next}; {n=0;print}' /etc/rc.local
-+ sudo mv /tmp/tmp.XIlEfiGujT /etc/rc.local
++ sudo mv /tmp/tmp.dpzHy7BSys /etc/rc.local
 + '[' yes == yes ']'
 + grep -Fq '#START RASPIMJPEG SECTION' /etc/rc.local
 + sudo sed -i '/exit 0/d' /etc/rc.local
@@ -164,7 +169,6 @@
 + sudo chown root:root /etc/rc.local
 + sudo chmod 755 /etc/rc.local
 + '[' -e /var/www/html/uconfig ']'
-+ sudo chown www-data:www-data /var/www/html/uconfig
 + '[' -e /var/www/html/schedule.php ']'
 + sudo rm /var/www/html/schedule.php
 + sudo sed -e 's/www/www\/html/g' www/schedule.php
